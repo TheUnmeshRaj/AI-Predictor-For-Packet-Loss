@@ -17,16 +17,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 
-# Disable OpenCV hardware acceleration for macOS compatibility
 os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(_name_)
+logger = logging.getLogger(__name__)
 
-# Network Monitor with Docker-based packet loss simulation
 class NetworkMonitor:
-    def _init_(self, target_ip="172.17.0.2"):  # Docker container IP
+    def __init__(self, target_ip="172.17.0.2"):  
         self.target_ip = target_ip
         self.rtt_history = deque(maxlen=100)
         self.jitter_history = deque(maxlen=100)
@@ -40,7 +37,7 @@ class NetworkMonitor:
         try:
             rtt = ping3.ping(self.target_ip, unit="ms", timeout=1)
             if rtt is None:
-                rtt = 1000  # Assume high RTT for timeout
+                rtt = 1000  
             return rtt
         except Exception as e:
             logger.warning(f"RTT measurement failed: {e}")
@@ -93,9 +90,9 @@ class NetworkMonitor:
         self.packet_loss_queue.put(metrics)
         return metrics
 
-# AI Model for Packet Loss Prediction
+
 class PacketLossPredictor:
-    def _init_(self):
+    def __init__(self):
         self.model = RandomForestClassifier(n_estimators=100, random_state=42)
         self.is_trained = False
 
@@ -136,27 +133,27 @@ class PacketLossPredictor:
             logger.error(f"Prediction failed: {e}")
             return 0
 
-# Video Call Simulation
+
 class VideoCallSimulator:
-    def _init_(self, host="172.17.0.2", port=6000):
+    def __init__(self, host="172.17.0.2", port=6000):
         self.host = host
         self.port = port
-        self.resolution = (640, 480)  # Default 480p
+        self.resolution = (640, 480)  
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.settimeout(1.0)
         self.running = False
-        self.cap = cv2.VideoCapture(0)  # Use webcam
-        # Uncomment to use a video file instead:
-        # self.cap = cv2.VideoCapture("sample.mp4")  # Place sample.mp4 in project directory
+        self.cap = cv2.VideoCapture(0)  
+        
+        
         self.monitor = NetworkMonitor()
         self.predictor = PacketLossPredictor()
 
     def adjust_quality(self, predicted_loss):
         if predicted_loss == 1:
-            self.resolution = (320, 240)  # Reduce to 240p
+            self.resolution = (320, 240)  
             logger.info("Reducing resolution to 240p due to predicted packet loss")
         else:
-            self.resolution = (640, 480)  # Restore to 480p
+            self.resolution = (640, 480)  
             logger.info("Restoring resolution to 480p")
 
     def send_frame(self, frame):
@@ -231,7 +228,7 @@ class VideoCallSimulator:
                     continue
             else:
                 logger.warning("Received invalid or no frame")
-            time.sleep(0.01)  # Prevent tight loop
+            time.sleep(0.01)  
         self.cleanup()
 
     def cleanup(self):
@@ -249,7 +246,7 @@ class VideoCallSimulator:
         except:
             pass
 
-# Streamlit Dashboard
+
 def run_streamlit_dashboard():
     st.title("AI Packet Loss Predictor Dashboard")
     st.markdown("Real-time network metrics and packet loss predictions")
@@ -299,7 +296,7 @@ def run_streamlit_dashboard():
             logger.error(f"Streamlit dashboard error: {e}")
             time.sleep(1)
 
-# Offline Visualization
+
 def plot_metrics(metrics_history):
     try:
         rtt = [m["rtt"] for m in metrics_history]
@@ -325,14 +322,14 @@ def main():
     simulator = VideoCallSimulator()
     metrics_history = []
     
-    # Start Client A in a separate thread
+    
     client_a_thread = threading.Thread(target=simulator.run_client_a)
     client_a_thread.start()
     
-    # Start Client B in the main thread
+    
     simulator.run_client_b()
     
-    # Collect metrics for plotting
+    
     while simulator.running:
         try:
             metrics = simulator.monitor.packet_loss_queue.get_nowait()
@@ -341,7 +338,7 @@ def main():
             pass
         time.sleep(0.1)
     
-    # Plot metrics offline
+    
     if metrics_history:
         plot_metrics(metrics_history)
 
