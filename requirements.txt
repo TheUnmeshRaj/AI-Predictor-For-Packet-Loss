@@ -1,0 +1,9 @@
+opencv-python==4.7.0.72
+matplotlib==3.7.1
+numpy==1.24.2
+pandas==2.0.1
+ping3==4.0.1
+plotly==5.14.1
+psutil==5.9.4
+streamlit==1.18.0
+scikit-learn==1.2.1
